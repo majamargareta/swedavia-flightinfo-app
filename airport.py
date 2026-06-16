@@ -45,5 +45,60 @@ def check_arrivals():
         print("-" * 40)
 
 
+def check_departures():
+    print("Departures coming soon")
+
+
+def search_flight():
+    print("Search flight coming soon")
+
+
+def run_odata_query():
+    print("OData query coming soon")
+
+
+def check_api_health():
+    print("API health coming soon")
+
+
+def run_auto_demo():
+    print("Auto-demo coming soon")
+
+
+def show_menu():
+    print("\n=== Swedavia FlightInfo API v2 ===")
+    print("1. View arrivals")
+    print("2. View departures")
+    print("3. Search specific flight")
+    print("4. Run OData query")
+    print("5. Check API health")
+    print("6. Run full auto-demo")
+    print("0. Exit")
+
+
+def main():
+    while True:
+        show_menu()
+        choice = input("Choose option: ")
+
+        if choice == "1":
+            check_arrivals()
+        elif choice == "2":
+            check_departures()
+        elif choice == "3":
+            search_flight()
+        elif choice == "4":
+            run_odata_query()
+        elif choice == "5":
+            check_api_health()
+        elif choice == "6":
+            run_auto_demo()
+        elif choice == "0":
+            print("Goodbye!")
+            break
+        else:
+            print("Invalid choice, try again.")
+
+
 if __name__ == "__main__":
-    check_arrivals()
+    main()
