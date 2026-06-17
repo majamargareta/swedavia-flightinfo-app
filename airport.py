@@ -133,7 +133,15 @@ def check_api_health():
 
 
 def run_auto_demo():
-    print("Auto-demo coming soon")
+    print("\n=== AUTO DEMO START ===\n")
+
+    print("1. Arrivals")
+    check_arrivals()
+
+    print("\n2. Departures")
+    check_departures()
+
+    print("\n=== AUTO DEMO END ===")
 
 
 def show_menu():
