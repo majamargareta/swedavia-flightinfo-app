@@ -46,11 +46,66 @@ def check_arrivals():
 
 
 def check_departures():
-    print("Departures coming soon")
+    airport = "ARN"
+    today = date.today().isoformat()
+
+    url = f"{BASE_URL}/{airport}/departures/{today}"
+    response = requests.get(url, headers=HEADERS)
+
+    print("Status code:", response.status_code)
+
+    data = response.json()
+    flights = data["flights"]
+
+    print("Antal flyg:", data["numberOfFlights"])
+    print()
+
+    for flight in flights[:10]:
+        flight_id = flight.get("flightId", "Okänt flyg")
+        destination = flight.get("arrivalAirportEnglish", "Okänd destination")
+        airline = flight.get("airlineOperator", {}).get("name", "Okänt flygbolag")
+        status = flight.get("locationAndStatus", {}).get(
+            "flightLegStatusEnglish",
+            "Okänd status"
+        )
+
+        print(f"{flight_id}")
+        print(f"Till: {destination}")
+        print(f"Flygbolag: {airline}")
+        print(f"Status: {status}")
+        print("-" * 40)
 
 
 def search_flight():
-    print("Search flight coming soon")
+    airport = "ARN"
+    today = date.today().isoformat()
+    search_term = input("Enter flight number: ").upper()
+
+    urls = [
+        f"{BASE_URL}/{airport}/arrivals/{today}",
+        f"{BASE_URL}/{airport}/departures/{today}"
+    ]
+
+    found = False
+
+    for url in urls:
+        response = requests.get(url, headers=HEADERS)
+        data = response.json()
+
+        for flight in data["flights"]:
+            if flight.get("flightId", "").upper() == search_term:
+                found = True
+
+                print("\nFlight found:")
+                print(f"Flight: {flight.get('flightId', 'Unknown')}")
+                print(f"Airline: {flight.get('airlineOperator', {}).get('name', 'Unknown')}")
+                print(f"Status: {flight.get('locationAndStatus', {}).get('flightLegStatusEnglish', 'Unknown')}")
+                print(f"From: {flight.get('departureAirportEnglish', 'ARN')}")
+                print(f"To: {flight.get('arrivalAirportEnglish', 'ARN')}")
+                print("-" * 40)
+
+    if not found:
+        print("No flight found with that flight number.")
 
 
 def run_odata_query():
