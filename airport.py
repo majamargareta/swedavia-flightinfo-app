@@ -109,7 +109,62 @@ def search_flight():
 
 
 def run_odata_query():
-    print("OData query coming soon")
+    print("\nOData Query")
+    print("Example:")
+    print("airport eq 'ARN' and flightType eq 'D'")
+    print()
+
+    filter_query = input("Enter OData filter: ")
+    count = input("How many results? Default 10: ")
+
+    if count == "":
+        count = 10
+    else:
+        count = int(count)
+
+    url = f"{BASE_URL}/query"
+
+    params = {
+        "filter": filter_query,
+        "count": count
+    }
+
+    response = requests.get(url, headers=HEADERS, params=params)
+
+    print("Status code:", response.status_code)
+
+    if response.status_code != 200:
+        print(response.text)
+        return
+
+    data = response.json()
+    flights = data.get("flights", [])
+
+    print(f"Results: {len(flights)}")
+    print()
+
+    for item in flights:
+        flight = item.get("departure") or item.get("arrival")
+
+        if not flight:
+            continue
+
+        flight_id = flight.get("flightId", "Unknown")
+        airline = flight.get("airlineOperator", {}).get("name", "Unknown")
+        status = flight.get("locationAndStatus", {}).get(
+            "flightLegStatusEnglish",
+            "Unknown"
+        )
+
+        from_airport = flight.get("departureAirportEnglish", "ARN")
+        to_airport = flight.get("arrivalAirportEnglish", "ARN")
+
+        print(f"Flight: {flight_id}")
+        print(f"Airline: {airline}")
+        print(f"From: {from_airport}")
+        print(f"To: {to_airport}")
+        print(f"Status: {status}")
+        print("-" * 40)
 
 
 def check_api_health():
