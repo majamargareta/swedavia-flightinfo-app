@@ -113,7 +113,23 @@ def run_odata_query():
 
 
 def check_api_health():
-    print("API health coming soon")
+    airport = "ARN"
+    today = date.today().isoformat()
+    url = f"{BASE_URL}/{airport}/arrivals/{today}"
+
+    response = requests.get(url, headers=HEADERS)
+
+    print("\nAPI Health Check")
+    print("Status code:", response.status_code)
+
+    if response.status_code == 200:
+        print("API is working.")
+    elif response.status_code == 401:
+        print("Unauthorized. Check your API key.")
+    elif response.status_code == 404:
+        print("Endpoint not found.")
+    else:
+        print("API returned an unexpected response.")
 
 
 def run_auto_demo():
