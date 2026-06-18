@@ -3,11 +3,16 @@ import requests
 from dotenv import load_dotenv
 from datetime import date, datetime, timezone
 
+# Load environment variables from the .env file.
 load_dotenv()
 
+# Read the Swedavia API key from the environment.
 API_KEY = os.getenv("SWEDAVIA_API_KEY")
+
+# Base URL for Swedavia FlightInfo API v2.
 BASE_URL = "https://api.swedavia.se/flightinfo/v2"
 
+# Headers required for all API requests.
 HEADERS = {
     "Ocp-Apim-Subscription-Key": API_KEY,
     "Accept": "application/json"
@@ -15,6 +20,7 @@ HEADERS = {
 
 
 def get_relevant_flights(flights, time_key):
+    """Filter out deleted flights and return upcoming flights sorted by time."""
     now = datetime.now(timezone.utc)
     active_flights = []
 
@@ -24,21 +30,26 @@ def get_relevant_flights(flights, time_key):
             ""
         )
 
+        # Skip deleted flights so the user sees relevant flight information.
         if status == "Deleted":
             continue
 
+        # Get the scheduled time from either arrivalTime or departureTime.
         scheduled_time = flight.get(time_key, {}).get("scheduledUtc")
 
         if not scheduled_time:
             continue
 
+        # Convert the API time string into a Python datetime object.
         flight_time = datetime.fromisoformat(
             scheduled_time.replace("Z", "+00:00")
         )
 
+        # Only keep flights that are still relevant from the current time.
         if flight_time >= now:
             active_flights.append(flight)
 
+    # Sort flights by scheduled time, earliest first.
     active_flights.sort(
         key=lambda flight: flight.get(time_key, {}).get("scheduledUtc", "")
     )
@@ -47,9 +58,11 @@ def get_relevant_flights(flights, time_key):
 
 
 def check_arrivals():
+    """Fetch and display upcoming arrivals for Arlanda Airport."""
     airport = "ARN"
     today = date.today().isoformat()
 
+    # Build the arrivals endpoint URL.
     url = f"{BASE_URL}/{airport}/arrivals/{today}"
     response = requests.get(url, headers=HEADERS)
 
@@ -61,8 +74,10 @@ def check_arrivals():
     print("Antal flyg:", data["numberOfFlights"])
     print()
 
+    # Get the most relevant arrivals sorted by arrival time.
     relevant_flights = get_relevant_flights(flights, "arrivalTime")
 
+    # Display the first 10 relevant arrivals.
     for flight in relevant_flights[:10]:
         flight_id = flight.get("flightId", "Okänt flyg")
         departure = flight.get("departureAirportEnglish", "Okänd stad")
@@ -80,9 +95,11 @@ def check_arrivals():
 
 
 def check_departures():
+    """Fetch and display upcoming departures from Arlanda Airport."""
     airport = "ARN"
     today = date.today().isoformat()
 
+    # Build the departures endpoint URL.
     url = f"{BASE_URL}/{airport}/departures/{today}"
     response = requests.get(url, headers=HEADERS)
 
@@ -94,8 +111,10 @@ def check_departures():
     print("Antal flyg:", data["numberOfFlights"])
     print()
 
+    # Get the most relevant departures sorted by departure time.
     relevant_flights = get_relevant_flights(flights, "departureTime")
 
+    # Display the first 10 relevant departures.
     for flight in relevant_flights[:10]:
         flight_id = flight.get("flightId", "Okänt flyg")
         destination = flight.get("arrivalAirportEnglish", "Okänd destination")
@@ -113,10 +132,12 @@ def check_departures():
 
 
 def search_flight():
+    """Search for a specific flight number in today's arrivals and departures."""
     airport = "ARN"
     today = date.today().isoformat()
     search_term = input("Enter flight number: ").upper()
 
+    # Search both arrivals and departures for the selected airport and date.
     urls = [
         f"{BASE_URL}/{airport}/arrivals/{today}",
         f"{BASE_URL}/{airport}/departures/{today}"
@@ -145,6 +166,7 @@ def search_flight():
 
 
 def run_odata_query():
+    """Let the user run a custom OData query against the FlightInfo query endpoint."""
     print("\nOData Query")
     print("Example:")
     print("airport eq 'ARN' and flightType eq 'D'")
@@ -153,6 +175,7 @@ def run_odata_query():
     filter_query = input("Enter OData filter: ")
     count = input("How many results? Default 10: ")
 
+    # Use 10 results as default if the user leaves the field empty.
     if count == "":
         count = 10
     else:
@@ -179,6 +202,7 @@ def run_odata_query():
     print(f"Results: {len(flights)}")
     print()
 
+    # The query endpoint can return either arrival or departure objects.
     for item in flights:
         flight = item.get("departure") or item.get("arrival")
 
@@ -204,6 +228,7 @@ def run_odata_query():
 
 
 def check_api_health():
+    """Check if the API connection is working by making a real arrivals request."""
     airport = "ARN"
     today = date.today().isoformat()
     url = f"{BASE_URL}/{airport}/arrivals/{today}"
@@ -224,6 +249,7 @@ def check_api_health():
 
 
 def run_auto_demo():
+    """Run a short demo of the main flight functions."""
     print("\n=== AUTO DEMO START ===\n")
 
     print("1. Arrivals")
@@ -236,6 +262,7 @@ def run_auto_demo():
 
 
 def show_menu():
+    """Display the main CLI menu."""
     print("\n=== Swedavia FlightInfo API v2 ===")
     print("1. View arrivals")
     print("2. View departures")
@@ -247,6 +274,7 @@ def show_menu():
 
 
 def main():
+    """Main program loop for the terminal application."""
     while True:
         show_menu()
         choice = input("Choose option: ")
@@ -270,5 +298,6 @@ def main():
             print("Invalid choice, try again.")
 
 
+# Start the application only when this file is run directly.
 if __name__ == "__main__":
     main()
