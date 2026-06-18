@@ -1,7 +1,7 @@
 import os
 import requests
 from dotenv import load_dotenv
-from datetime import date
+from datetime import date, datetime, timezone
 
 load_dotenv()
 
@@ -12,6 +12,38 @@ HEADERS = {
     "Ocp-Apim-Subscription-Key": API_KEY,
     "Accept": "application/json"
 }
+
+
+def get_relevant_flights(flights, time_key):
+    now = datetime.now(timezone.utc)
+    active_flights = []
+
+    for flight in flights:
+        status = flight.get("locationAndStatus", {}).get(
+            "flightLegStatusEnglish",
+            ""
+        )
+
+        if status == "Deleted":
+            continue
+
+        scheduled_time = flight.get(time_key, {}).get("scheduledUtc")
+
+        if not scheduled_time:
+            continue
+
+        flight_time = datetime.fromisoformat(
+            scheduled_time.replace("Z", "+00:00")
+        )
+
+        if flight_time >= now:
+            active_flights.append(flight)
+
+    active_flights.sort(
+        key=lambda flight: flight.get(time_key, {}).get("scheduledUtc", "")
+    )
+
+    return active_flights
 
 
 def check_arrivals():
@@ -29,7 +61,9 @@ def check_arrivals():
     print("Antal flyg:", data["numberOfFlights"])
     print()
 
-    for flight in flights[:10]:
+    relevant_flights = get_relevant_flights(flights, "arrivalTime")
+
+    for flight in relevant_flights[:10]:
         flight_id = flight.get("flightId", "Okänt flyg")
         departure = flight.get("departureAirportEnglish", "Okänd stad")
         airline = flight.get("airlineOperator", {}).get("name", "Okänt flygbolag")
@@ -60,7 +94,9 @@ def check_departures():
     print("Antal flyg:", data["numberOfFlights"])
     print()
 
-    for flight in flights[:10]:
+    relevant_flights = get_relevant_flights(flights, "departureTime")
+
+    for flight in relevant_flights[:10]:
         flight_id = flight.get("flightId", "Okänt flyg")
         destination = flight.get("arrivalAirportEnglish", "Okänd destination")
         airline = flight.get("airlineOperator", {}).get("name", "Okänt flygbolag")
